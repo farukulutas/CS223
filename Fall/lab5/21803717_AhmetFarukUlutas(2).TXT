@@ -1,0 +1,413 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: Ahmet Faruk Ulutaş
+// 
+// Create Date: 12.12.2020 03:10:29
+// Design Name: 
+// Module Name: testbench_memory
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module testbench_memory(); 
+
+    logic clk; 
+    
+    logic [3:0] writeAddress; 
+    
+    logic [7:0] writeData; 
+    
+    logic writeEnable; 
+    
+    logic [3:0] readAddress1; 
+    
+    logic [3:0] readAddress2; 
+    
+    logic [7:0] readData1; 
+    
+    logic [7:0] readData2; 
+    
+    memory dut(clk, writeAddress, writeData, writeEnable, readAddress1, readAddress2, readData1, readData2); 
+    
+    always 
+    
+    begin 
+    
+    clk = 1; #5; clk = 0; #5; 
+    
+    end 
+    
+     
+    
+    initial begin 
+        
+        writeEnable = 1; 
+        
+        writeAddress = 4'b0000; 
+        
+        writeData = 8'b00000001; 
+        
+        readAddress1 = 4'b0000; 
+        
+        #10; 
+        
+        writeAddress = 4'b0001; 
+        
+        writeData = 8'b00000010; 
+        
+        readAddress1 = 4'b0000; 
+        
+        readAddress2 = 4'b0001; 
+        
+        #10; 
+        
+        writeAddress = 4'b0010; 
+        
+        writeData = 8'b00000111; 
+        
+        readAddress1 = 4'b0001; 
+        
+        readAddress2 = 4'b0010; 
+        
+        #10; 
+        
+        writeAddress = 4'b0011; 
+        
+        writeData = 8'b01110001; 
+        
+        readAddress1 = 4'b0001; 
+        
+        readAddress2 = 4'b0011; 
+        
+        #10; 
+        
+        writeAddress = 4'b0100; 
+        
+        writeData = 8'b00011101; 
+        
+        readAddress1 = 4'b0010; 
+        
+        readAddress2 = 4'b0100; 
+        
+        #10; 
+        
+        writeAddress = 4'b0101; 
+        
+        writeData = 8'b11110001; 
+        
+        readAddress1 = 4'b0011; 
+        
+        readAddress2 = 4'b0101; 
+        
+        #10; 
+        
+        writeAddress = 4'b0110; 
+        
+        writeData = 8'b00010011; 
+        
+        readAddress1 = 4'b0101; 
+        
+        readAddress2 = 4'b0110; 
+        
+        #10; 
+        
+        writeAddress = 4'b0111; 
+        
+        writeData = 8'b01110001; 
+        
+        readAddress1 = 4'b0110; 
+        
+        readAddress2 = 4'b0111; 
+        
+        #10; 
+        
+        writeAddress = 4'b1000; 
+        
+        writeData = 8'b00000001; 
+        
+        readAddress1 = 4'b0111; 
+        
+        readAddress2 = 4'b1000; 
+        
+        #10; 
+        
+        writeAddress = 4'b1001; 
+        
+        writeData = 8'b00000011; 
+        
+        readAddress1 = 4'b1000; 
+        
+        readAddress2 = 4'b1001; 
+        
+        #10; 
+        
+        writeAddress = 4'b1010; 
+        
+        writeData = 8'b10010001; 
+        
+        readAddress1 = 4'b1001; 
+        
+        readAddress2 = 4'b1010; 
+        
+        #10; 
+        
+        writeAddress = 4'b1011; 
+        
+        writeData = 8'b11010001; 
+        
+        readAddress1 = 4'b1010; 
+        
+        readAddress2 = 4'b1011; 
+        
+        #10; 
+        
+        writeAddress = 4'b1100; 
+        
+        writeData = 8'b00011111; 
+        
+        readAddress1 = 4'b1011; 
+        
+        readAddress2 = 4'b1100; 
+        
+        #10; 
+        
+        writeAddress = 4'b1101; 
+        
+        writeData = 8'b00011001; 
+        
+        readAddress1 = 4'b1011; 
+        
+        readAddress2 = 4'b1101; 
+        
+        #10; 
+        
+        writeAddress = 4'b1110; 
+        
+        writeData = 8'b00110001; 
+        
+        readAddress1 = 4'b1101; 
+        
+        readAddress2 = 4'b1110; 
+        
+        #10; 
+        
+        writeAddress = 4'b1111; 
+        
+        writeData = 8'b00110011; 
+        
+        readAddress1 = 4'b1111; 
+        
+        readAddress2 = 4'b1111; 
+        
+        #10;  
+    
+    end 
+
+endmodule
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: Ahmet Faruk Ulutaş
+// 
+// Create Date: 12.12.2020 02:58:19
+// Design Name: 
+// Module Name: memory
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module memory(input logic clk, input logic [3:0] writeAddress, input logic [7:0] writeData, input logic writeEnable, input logic [3:0] readAddress1, input logic [3:0] readAddress2, output logic [7:0] readData1, output logic [7:0] readData2); 
+
+    logic [7:0] mem[15:0]; 
+     
+    
+    always_ff @ (posedge clk) 
+        if (writeEnable) 
+            mem[writeAddress] <= writeData; 
+     
+    
+    assign readData1 = mem[readAddress1]; 
+    assign readData2 = mem[readAddress2];
+ 
+
+endmodule
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 12.12.2020 03:48:57
+// Design Name: 
+// Module Name: testbench_reduceSum
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module testbench_reduceSum();
+logic clk;
+logic calculateSum;
+logic [3:0] readAddress2;
+logic [7:0] readData2;
+logic [15:0] sum;
+logic reset;
+logic [7:0] data[15:0];
+
+reduceSum rs(clk,reset,calculateSum,readData2,readAddress2,sum);
+assign readData2 = data[readAddress2];
+
+always
+    begin
+        clk <= 1; #5; clk <= 0; #5;
+    end
+    
+initial begin
+    for(int i = 0; i < 16; i++) begin
+        data[i] = 1; 
+    end
+    
+    calculateSum = 1;
+    reset = 0;
+    #80;
+    calculateSum = 0;
+    
+end
+
+endmodule
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: Ahmet Faruk Ulutaş
+// 
+// Create Date: 12.12.2020 03:30:22
+// Design Name: 
+// Module Name: reduceSum
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module reduceSum(input logic clk, input logic reset, input logic calculateSum, input logic [7:0] readData2, output logic [3:0] readAddress2, output logic [15:0] sum); 
+
+    typedef enum logic [1:0] {S0, S1, S2} statetype; 
+    
+    logic [4:0] cnt;
+    logic [4:0] nextCnt; 
+    logic [15:0] nextSum; 
+    logic [15:0] curSum;  
+       
+    statetype [1:0] state, nextstate;
+   
+    always_ff @ (posedge clk) 
+        
+        if (reset)
+        begin
+            cnt <= 0; 
+            curSum <= 0;
+            state <= S0;      
+        end  
+    
+        else 
+        begin 
+            cnt <= nextCnt;
+            state<= nextstate; 
+            curSum <= nextSum;   
+        end
+        
+        always_comb 
+            
+            case(state)
+            
+            S0: 
+                begin 
+                    
+                    if (calculateSum) 
+            
+                        nextstate = S1; 
+                        
+                    else 
+            
+                        nextstate = S0; 
+                
+                        nextCnt = cnt; 
+                
+                        nextSum = curSum; 
+            
+                end  
+                
+                
+                S1:  
+                begin 
+            
+                    nextCnt = 0; 
+            
+                    nextSum = 0; 
+            
+                    nextstate = S2; 
+            
+                end
+                  
+                S2: 
+            
+                begin 
+            
+                    if (cnt <= 15)  
+            
+                    begin
+                        nextstate = S2;
+                        nextSum = curSum + readData2;
+                    end 
+            
+                    else
+                        nextstate = S0;
+                        nextCnt = cnt + 1;
+                    end
+                   
+                    default: nextstate = S0; 
+            endcase 
+        
+    assign readAddress2 = cnt; 
+    assign sum = curSum;
+endmodule

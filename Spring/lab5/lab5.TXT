@@ -1,0 +1,306 @@
+module ALU(
+    input logic [1:0] Sel,
+    input logic [3:0] a,
+    input logic [3:0] b,
+    output logic [3:0] Res);
+    
+    always_comb begin
+        case (Sel)
+            2'b00: Res = a + 1;
+            2'b01: Res = a + b;
+            2'b10: Res = a - b;
+            2'b11: Res = a | b;
+        endcase
+    end
+endmodule
+
+module mux2to1( input logic [3:0] d0, [3:0] d1, s, output logic [3:0] y);
+    assign y = s ? d1 : d0; 
+endmodule
+
+module toppDesign( input logic [3:0] EXTDATA, input logic isExternal, input logic [2:0] AddrSrc1, input logic [2:0] AddrSrc2, input logic [2:0] AddrDest, input logic writeEnable, input logic clk, input logic [1:0] ALUSel, output logic [3:0] Rel);
+   // logic writeEnable;
+    logic [3:0] muxOut;
+    logic [3:0] readData1;
+    logic [3:0] readData2;
+    
+    mux2to1 dut3( Rel, EXTDATA, isExternal, muxOut);
+    //debouncer dut4( clk, pushButn, writeEnable);
+    RegisterFile dut(clk,writeEnable,AddrDest,AddrSrc1,AddrSrc2,muxOut,readData1,readData2);
+    ALU dut2( ALUSel, readData1, readData2, Rel);
+    //SevenSegmentDisplay sevseg(clk, Rel, seg, dp, an);
+endmodule
+
+module debouncer(input logic clk, input logic btnL, output logic pulse);
+    logic [24:0] timer;
+    typedef enum logic [1:0]{S0,S1,S2,S3} states;
+    states state, nextState;
+    logic gotInput;
+    
+    always_ff@(posedge clk)
+        begin    
+            state <= nextState;
+            if(gotInput)
+                timer <= 25000000;
+            else
+                timer <= timer - 1;
+        end
+    always_comb
+        case(state)
+            S0: if(btnL) 
+                begin //startTimer
+                    nextState = S1;    
+                    gotInput = 1;
+                end
+                else begin nextState = S0; gotInput = 0; end
+            S1: begin nextState = S2; gotInput = 0; end
+            S2: begin nextState = S3; gotInput = 0; end
+            S3: begin if(timer == 0) nextState = S0; else nextState = S3; gotInput = 0; end
+            default: begin nextState = S0; gotInput = 0; end
+            endcase
+    
+    assign pulse = ( state == S1 );
+endmodule
+
+module SevenSegmentDisplay(
+    input clk, 
+    input [3:0] in,
+    output [6:0]seg, logic dp,
+    output [3:0] an
+    );
+    
+    localparam N = 18;
+    logic [N-1:0] count = {N{1'b0}};
+    always@ (posedge clk)
+        count <= count + 1;
+    
+     
+    logic [4:0]digit_val;
+    logic [3:0]digit_en;
+     
+    always@ (*)
+     begin
+     digit_en = 4'b1111;
+     digit_val = in[0];
+     
+      case(count[N-1:N-2])
+        
+       2'b00 :  //select first 7Seg.
+        begin
+         digit_val = {1'b0, in[0]};
+         digit_en = 4'b1110;
+        end
+        
+       2'b01:  //select second 7Seg.
+        begin
+         digit_val = {1'b0, in[1]};
+         digit_en = 4'b1101;
+        end
+        
+       2'b10:  //select third 7Seg.
+        begin
+         digit_val = {1'b0, in[2]};
+         digit_en = 4'b1011;
+        end
+         
+       2'b11:  //select forth 7Seg.
+        begin
+         digit_val = {1'b0, in[3]};
+         digit_en = 4'b0111;
+        end
+      endcase
+     end
+     
+    
+    //Convert digit number to LED vector. LEDs are active low.
+    logic [6:0] sseg_LEDs; 
+    always @(*)
+     begin 
+      sseg_LEDs = 7'b1111111; //default
+      case( digit_val)
+       5'd0 : sseg_LEDs = 7'b1000000; //to display 0
+       5'd1 : sseg_LEDs = 7'b1111001; //to display 1
+       5'd2 : sseg_LEDs = 7'b0100100; //to display 2
+       5'd3 : sseg_LEDs = 7'b0110000; //to display 3
+       5'd4 : sseg_LEDs = 7'b0011001; //to display 4
+       5'd5 : sseg_LEDs = 7'b0010010; //to display 5
+       5'd6 : sseg_LEDs = 7'b0000010; //to display 6
+       5'd7 : sseg_LEDs = 7'b1111000; //to display 7
+       5'd8 : sseg_LEDs = 7'b0000000; //to display 8
+       5'd9 : sseg_LEDs = 7'b0010000; //to display 9
+       5'd10: sseg_LEDs = 7'b0001000; //to display a
+       5'd11: sseg_LEDs = 7'b0000011; //to display b
+       5'd12: sseg_LEDs = 7'b1000110; //to display c
+       5'd13: sseg_LEDs = 7'b0100001; //to display d
+       5'd14: sseg_LEDs = 7'b0000110; //to display e
+       5'd15: sseg_LEDs = 7'b0001110; //to display f   
+       5'd16: sseg_LEDs = 7'b0110111; //to display "="
+       default : sseg_LEDs = 7'b0111111; //dash
+      endcase
+    end
+     
+    assign an = digit_en;
+    assign seg = sseg_LEDs; 
+    assign dp = 1'b1; //turn dp off
+    
+endmodule
+
+
+module top_testbench();
+    logic [3:0] EXTDATA;
+    logic isExternal;
+    logic [2:0] AddrSrc1;
+    logic [2:0] AddrSrc2;
+    logic [2:0] AddrDest;
+    logic writeEnable;
+    logic clk;
+    logic [1:0] ALUSel;
+    logic [3:0] Rel;
+    
+    toppDesign dut5( EXTDATA, isExternal, AddrSrc1, AddrSrc2, AddrDest, writeEnable, clk, ALUSel, Rel);
+    
+    always
+    begin
+        clk = 1; #5; clk = 0; #5;
+    end
+    
+    initial begin
+        isExternal = 1'b0;
+        EXTDATA = 4'b0000;
+        writeEnable = 1'b0;
+        AddrSrc1 = 3'b000; AddrSrc2 = 3'b000; AddrDest = 3'b000;
+        ALUSel = 2'b01;
+        #20;
+    end
+endmodule
+
+module RegisterFile(
+    input clk,
+    input logic writeEnable,
+    input logic [2:0] writeAddress,
+    input logic [2:0] readAddress1,
+    input logic [2:0] readAddress2,
+    input logic [3:0] writeData,
+    output logic [3:0] readData1,
+    output logic [3:0] readData2);
+    
+    logic [3:0] rf[7:0];
+    
+    always_ff @ (posedge clk)
+        if (writeEnable)
+            rf[writeAddress] <= writeData; 
+ 
+    assign readData1 = rf[readAddress1];
+    assign readData2 = rf[readAddress2];
+endmodule
+
+module testbench();
+    logic clk;
+    logic writeEnable;
+    logic [2:0] writeAddress;
+    logic [2:0] readAddress1;
+    logic [2:0] readAddress2;
+    logic [3:0] writeData;
+    logic [3:0] readData1;
+    logic [3:0] readData2;
+ 
+    RegisterFile dut(clk,writeEnable,writeAddress,readAddress1,readAddress2,writeData,readData1,readData2);
+    always
+    begin
+        clk = 1; #5; clk = 0; #5;
+    end
+ 
+ initial begin
+     writeEnable = 1;
+     writeAddress = 3'b000; writeData = 4'b0000;
+     readAddress1 = 3'b000; readAddress2 = 3'b000;
+     #10;
+     writeAddress = 3'b001; writeData = 4'b0001;
+     readAddress1 = 3'b000; readAddress2 = 3'b001;
+     #10;
+     writeAddress = 3'b010; writeData = 4'b0010;
+     readAddress1 = 3'b001; readAddress2 = 3'b010;
+     #10;
+     writeAddress = 3'b011; writeData = 4'b0011;
+     readAddress1 = 3'b010; readAddress2 = 3'b011;
+     #10;
+     writeAddress = 3'b100; writeData = 4'b0100;
+     readAddress1 = 3'b011; readAddress2 = 3'b100;
+     #10;
+     writeAddress = 3'b101; writeData = 4'b0101;
+     readAddress1 = 3'b100; readAddress2 = 3'b101;
+     #10;
+     writeAddress = 3'b110; writeData = 4'b0110;
+     readAddress1 = 3'b101; readAddress2 = 3'b110;
+     #10;
+     writeAddress = 3'b111; writeData = 4'b0111; 
+     readAddress1 = 3'b110; readAddress2 = 3'b111;
+     #10; 
+    end
+endmodule
+
+module alu_testbench();
+    logic clk;
+    logic [1:0] Sel;
+    logic [3:0] a;
+    logic [3:0] b;
+    logic [3:0] Res;
+    
+    ALU dut( Sel, a, b, Res);
+    
+    always
+    begin
+        clk = 1; #5; clk = 0; #5;
+    end
+ 
+    initial begin
+        a = 3'b000; b = 3'b000;
+        Sel = 2'b00;
+        #10;
+        a = 3'b000; b = 3'b001;
+        Sel = 2'b00;
+        #10;
+        a = 3'b001; b = 3'b000;
+        Sel = 2'b00;
+        #10;
+        a = 3'b001; b = 3'b001;
+        Sel = 2'b00;
+        #10;
+        a = 3'b000; b = 3'b000;
+        Sel = 2'b01;
+        #10;
+        a = 3'b000; b = 3'b001;
+        Sel = 2'b01;
+        #10;
+        a = 3'b001; b = 3'b000;
+        Sel = 2'b01;
+        #10;
+        a = 3'b001; b = 3'b001;
+        Sel = 2'b01;
+        #10;
+        a = 3'b000; b = 3'b000;
+        Sel = 2'b10;
+        #10;
+        a = 3'b000; b = 3'b001;
+        Sel = 2'b10;
+        #10;
+        a = 3'b001; b = 3'b000;
+        Sel = 2'b10;
+        #10;
+        a = 3'b001; b = 3'b001;
+        Sel = 2'b10;
+        #10;
+        a = 3'b000; b = 3'b000;
+        Sel = 2'b11;
+        #10;
+        a = 3'b000; b = 3'b001;
+        Sel = 2'b11;
+        #10;
+        a = 3'b001; b = 3'b000;
+        Sel = 2'b11;
+        #10;
+        a = 3'b001; b = 3'b001;
+        Sel = 2'b11;
+        #10;
+    end
+endmodule

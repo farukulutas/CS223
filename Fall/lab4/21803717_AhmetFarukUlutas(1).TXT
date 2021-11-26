@@ -1,0 +1,182 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: Ahmet Faruk Ulutaş
+// 
+// Create Date: 28.11.2020 11:52:45
+// Design Name: 
+// Module Name: clock_divider
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module clock_divider( input clk,
+                      output logic clk_div);
+    localparam constantNumber = 300000000;
+    logic [31:0] count;
+     
+    always @ (posedge(clk))
+    begin
+        if (count == constantNumber - 1)
+            count <= 32'b0;
+        else
+            count <= count + 1;
+    end
+    
+    always @ (posedge(clk))
+    begin
+        if (count == constantNumber - 1)
+            clk_div <= ~clk_div;
+        else
+            clk_div <= clk_div;
+    end
+endmodule
+
+module trafficLightSystem ( input logic clock, reset, SA, SB, output logic [1:0]LA, LB);
+typedef enum logic [2:0] {S0, S1, S2, S3, S4, S5, S6, S7} stateType;
+typedef enum logic [1:0] {green, yellow, red} trafficLight;
+stateType [2:0] currentState, nextState;
+trafficLight [1:0] LA_, LB_;
+always_ff @ (posedge clock, posedge reset)
+if ( reset)
+currentState <= S0;
+else
+currentState <= nextState;
+always_comb
+case ( currentState)
+S0: begin
+LA_ = green;
+LB_ = red;
+if ( SA)
+nextState = S0;
+else
+nextState = S1;
+end
+S1: begin
+LA_ = yellow;
+LB_ = red;
+nextState = S2;
+end
+S2: begin
+LA_ = red;
+LB_ = red;
+nextState = S3;
+end
+S3: begin
+LA_ = red;
+LB_ = yellow;
+nextState = S4;
+end
+S4: begin
+LA_ = red;
+LB_ = green;
+if (TA) nextState = S4;
+else nextState = S5;
+end
+S5: begin
+LA_ = red;
+LB_ = yellow;
+nextState = S6;
+end
+S6: begin
+LA_ = red;
+LB_ = red;
+nextState = S7;
+end
+S7: begin
+LA_ = yellow;
+LB_ = red;
+nextState = S0;
+end
+default: nextState = S0;
+endcase
+assign LA = LA_;
+assign LB = LB_;
+endmodule
+
+TESTBENCH
+module testbench_trafficLightSystem();
+always
+        begin
+            clk = 1; #5; clk = 0; #5;
+        end
+
+    initial begin
+        reset = 1; TA = 0; TB = 0; #5;
+        reset = 0; 
+        TA = 1; TB = 0; #5;
+        TA = 0; TB = 0; #5;
+        TA = 0; TB = 0; #5;
+        TA = 0; TB = 0; #5;
+        TA = 0; TB = 0; #5;
+        TA = 0; TB = 1; #5;
+        TA = 0; TB = 0; #5;
+        TA = 0; TB = 0; #5;
+        TA = 0; TB = 0; #5;
+        TA = 0; TB = 0; #5;
+        TA = 1; TB = 1; #5;
+        TA = 0; TB = 1; #5;
+        TA = 0; TB = 1; #5;
+        TA = 0; TB = 1; #5;
+        TA = 0; TB = 1; #5;
+        TA = 1; TB = 1; #5;
+        TA = 1; TB = 0; #5;
+        TA = 0; TB = 1; #5;
+        TA = 0; TB = 1; #5;
+        TA = 0; TB = 1; #5;
+        TA = 1; TB = 0; #5;
+        TA = 0; TB = 0; #5;
+        TA = 1; TB = 0; #5;
+        TA = 1; TB = 0; #5;
+        TA = 1; TB = 0; #5;
+        TA = 0; TB = 1; #5;
+        TA = 0; TB = 0; #5;
+        TA = 1; TB = 0; #5;
+        TA = 1; TB = 0; #5;
+        TA = 1; TB = 0; #5;
+        TA = 1; TB = 1; #5;
+        TA = 0; TB = 1; #5;
+        TA = 1; TB = 1; #5;
+        TA = 1; TB = 1; #5;
+        TA = 1; TB = 1; #5;
+        TA = 1; TB = 1; #5;
+        TA = 1; TB = 0; #5;
+        TA = 1; TB = 1; #5;
+        TA = 1; TB = 1; #5;
+        TA = 1; TB = 1; #5;
+    end
+   
+endmodule
+
+
+module trafficLightSystemTop( input logic clock, reset, SA, SB, output logic [2:0] LA, LB);
+logic clock_;
+typedef enum logic [1:0] {green, yellow, red} light;
+light [1:0] LA_, LB_;
+clockChanger click( clock, clock_);
+trafficLightsSystem lights( clock_, reset, SA, SB, LA_, LB_);
+always_comb
+case (LA_)
+green: LA = 3'b011;
+yellow: LA = 3'b001;
+red: LA = 3'b111;
+default: LA = 3'b011;
+endcase
+always_comb
+case (LB_)
+green: LB = 3'b011;
+yellow: LB = 3'b001;
+red: LB = 3'b111;
+default: LB = 3'b111;
+endcase
+endmodule
