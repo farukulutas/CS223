@@ -1,13 +1,11 @@
 # CS223 :man_technologist:
-All my work in CS 223 - Computer Organization course.
+All my work in CS 223 - Digital Design course.
 
 ## Lab Contents:
 
-- `Lab1`: Creating and Running Simple MIPS Assembly Language Programs
-- `Lab2`: MIPS Assembly Language Programs Using Subprograms
-- `Lab3`: MIPS Assembly Language with Program as Data, Recursion, Linked Lists
-- `Lab4`: MIPS Single-Cycle Datapath and Controller
-- `Lab5`: Implementing the MIPS Processor with Pipelined Microarchitecture
-- `Lab6`: Examining the Effects of Cache Parameters and Program Factors 
-on Cache Hit Rate
-- `Lab7`: Programming PIC32 Microcontroller
+- `Lab1`: Digital Circuits Logic to Gates
+- `Lab2`: Full adder, full subtractor and 2-bit adder on FPGA
+- `Lab3`: Modeling Decoders and MUXs in System Verilog
+- `Lab4`: Traffic Light System
+- `Lab5`: Reduce Sum on Array
+- `Project`: Simple Processor
